@@ -32,6 +32,10 @@ CONNECTION_HAS_COMPLETED = False
 # variable tells it to trigger
 COMMAND_PROCESSED = True
 
+# For ProtoOASubscribeSpotsReq, server will keep sending data
+# Wait until unsubscribed then only trigger user input command
+UNSUBSCRIBED = True
+
 # Find `.env` and load the data into OS environment
 load_dotenv()
 
@@ -63,15 +67,17 @@ if __name__ == "__main__":
     def onMessageReceived(client, message): # Callback for receiving all messages
         global CONNECTION_HAS_COMPLETED
         global COMMAND_PROCESSED
+        global UNSUBSCRIBED
 
         # List of ignored message
         if message.payloadType in [ProtoOASubscribeSpotsRes().payloadType, ProtoOAAccountLogoutRes().payloadType, ProtoHeartbeatEvent().payloadType]:
             return
 
         elif message.payloadType == ProtoOAApplicationAuthRes().payloadType:
-            print(f"[{filename}:{inspect.currentframe().f_lineno}] API Application authorized\n")
-            print(f"[{filename}:{inspect.currentframe().f_lineno}] Please use setAccount command to set the authorized account before sending any other command, try help for more detail\n")
-            print(f"[{filename}:{inspect.currentframe().f_lineno}] To get account IDs use ProtoOAGetAccountListByAccessTokenReq command")
+            print(f"[{filename}:{inspect.currentframe().f_lineno}] API Application authorized")
+            print(f"[{filename}:{inspect.currentframe().f_lineno}] Now please use `ProtoOAGetAccountListByAccessTokenReq` command to get list of accounts")
+            print(f"[{filename}:{inspect.currentframe().f_lineno}] Then, run command `setAccount <ctidTraderAccountId> to authorize that account")
+            print(f"[{filename}:{inspect.currentframe().f_lineno}] Type `help` for more helps")
             if currentAccountId is not None:
                 sendProtoOAAccountAuthReq()
                 return
@@ -79,12 +85,14 @@ if __name__ == "__main__":
 
         elif message.payloadType == ProtoOAAccountAuthRes().payloadType:
             protoOAAccountAuthRes = Protobuf.extract(message)
-
-            print(f"[{filename}:{inspect.currentframe().f_lineno}] Account {protoOAAccountAuthRes.ctidTraderAccountId} has been authorized\n")
-            print(f"[{filename}:{inspect.currentframe().f_lineno}] This acccount will be used for all future requests\n")
+            print(f"[{filename}:{inspect.currentframe().f_lineno}] Account {protoOAAccountAuthRes.ctidTraderAccountId} has been authorized")
+            print(f"[{filename}:{inspect.currentframe().f_lineno}] This acccount will be used for all future requests")
             print(f"[{filename}:{inspect.currentframe().f_lineno}] You can change the account by using setAccount command")
-
             CONNECTION_HAS_COMPLETED = True
+
+        elif message.payloadType == ProtoOAUnsubscribeSpotsRes().payloadType:
+            print(f"[{filename}:{inspect.currentframe().f_lineno}] sendProtoOAUnsubscribeSpotsReq is ran. Unsubscribed.")
+            UNSUBSCRIBED = True
 
         else:
             print(f"[{filename}:{inspect.currentframe().f_lineno}] Message received: \n", Protobuf.extract(message))
@@ -96,28 +104,29 @@ if __name__ == "__main__":
 
     def showHelp():
         global COMMAND_PROCESSED
-        print("Commands (Parameters with an * are required), ignore the description inside ()")
-        print("setAccount(For all subsequent requests this account will be used) *accountId")
-        print("ProtoOAVersionReq clientMsgId")
-        print("ProtoOAGetAccountListByAccessTokenReq clientMsgId")
-        print("ProtoOAAssetListReq clientMsgId")
-        print("ProtoOAAssetClassListReq clientMsgId")
-        print("ProtoOASymbolCategoryListReq clientMsgId")
-        print("ProtoOASymbolsListReq includeArchivedSymbols(True/False) clientMsgId")
-        print("ProtoOATraderReq clientMsgId")
-        print("ProtoOASubscribeSpotsReq *symbolId *timeInSeconds(Unsubscribes after this time) subscribeToSpotTimestamp(True/False) clientMsgId")
-        print("ProtoOAReconcileReq clientMsgId")
-        print("ProtoOAGetTrendbarsReq *weeks *period *symbolId clientMsgId")
-        print("ProtoOAGetTickDataReq *days *type *symbolId clientMsgId")
-        print("NewMarketOrder *symbolId *tradeSide *volume clientMsgId")
-        print("NewLimitOrder *symbolId *tradeSide *volume *price clientMsgId")
-        print("NewStopOrder *symbolId *tradeSide *volume *price clientMsgId")
-        print("ClosePosition *positionId *volume clientMsgId")
-        print("CancelOrder *orderId clientMsgId")
-        print("DealOffsetList *dealId clientMsgId")
-        print("GetPositionUnrealizedPnL clientMsgId")
-        print("OrderDetails clientMsgId")
-        print("OrderListByPositionId *positionId fromTimestamp toTimestamp clientMsgId")
+        print("\n")
+        print("List of Commands (Parameters with an * are required), those with '()' are descriptions.")
+        print("1.  setAccount <*accountId>")
+        print("2.  ProtoOAVersionReq")
+        print("3.  ProtoOAGetAccountListByAccessTokenReq")
+        print("4.  ProtoOAAssetListReq")
+        print("5.  ProtoOAAssetClassListReq")
+        print("6.  ProtoOASymbolCategoryListReq")
+        print("7.  ProtoOASymbolsListReq <includeArchivedSymbols(True/False)>")
+        print("8.  ProtoOATraderReq")
+        print("9.  ProtoOASubscribeSpotsReq <*symbolId> <*timeInSeconds(Unsubscribes after this time)> <subscribeToSpotTimestamp(True/False)>")
+        print("10. ProtoOAReconcileReq")
+        print("11. ProtoOAGetTrendbarsReq <*weeks> <*period> <*symbolId>")
+        print("12. ProtoOAGetTickDataReq <*days> <*type> <*symbolId>")
+        print("13. NewMarketOrder <*symbolId> <*tradeSide> <*volume>")
+        print("14. NewLimitOrder <*symbolId> <*tradeSide> <*volume> <*price>")
+        print("15. NewStopOrder <*symbolId> <*tradeSide> <*volume> <*price>")
+        print("16. ClosePosition <*positionId> <*volume>")
+        print("17. CancelOrder <*orderId>")
+        print("18. DealOffsetList <*dealId>")
+        print("19. GetPositionUnrealizedPnL")
+        print("20. OrderDetails")
+        print("21. OrderListByPositionId <*positionId> <fromTimestamp> <toTimestamp>")
         COMMAND_PROCESSED = True
 
     def setAccount(accountId):
@@ -190,6 +199,8 @@ if __name__ == "__main__":
         deferred.addErrback(onError)
 
     def sendProtoOASubscribeSpotsReq(symbolId, timeInSeconds, subscribeToSpotTimestamp	= False, clientMsgId = None):
+        global UNSUBSCRIBED
+        UNSUBSCRIBED = False
         request = ProtoOASubscribeSpotsReq()
         request.ctidTraderAccountId = currentAccountId
         request.symbolId.append(int(symbolId))
@@ -324,18 +335,19 @@ if __name__ == "__main__":
         """
         os._exit(0)
 
-    def executeUserCommand():
+    def GetUserCommand():
         global COMMAND_PROCESSED
+        global UNSUBSCRIBED
         while CONNECTION_HAS_COMPLETED == False:
             continue
 
         try:
             while True:
-                while COMMAND_PROCESSED:
+                while COMMAND_PROCESSED and UNSUBSCRIBED:
                     userInput = input("\nCommand (ex help): ")
                     print(f"Command typed: {userInput}")
                     COMMAND_PROCESSED = False
-                    g_command_queue.put(userInput)
+                    g_command_queue.put(userInput) # Put them into queue for processUserCommand()
         except KeyboardInterrupt:
             """
             Attempted to detect CTRL + C but sadly,
@@ -350,35 +362,46 @@ if __name__ == "__main__":
             print(f"[{filename}:{inspect.currentframe().f_lineno}] Disconnect & Terminate script")
             User_Disconnect()
 
-    def processCommand():
+    def processUserCommand():
         global COMMAND_PROCESSED
         while True:
             userInput = g_command_queue.get() # Get command from queue
             userInputSplit = userInput.split(" ")
             if not userInputSplit:
-                print(f"[{filename}:{inspect.currentframe().f_lineno}] Command split error: ", userInput)
+                print(f"[{filename}:{inspect.currentframe().f_lineno}] Command split error")
                 COMMAND_PROCESSED = True
                 continue
             command = userInputSplit[0]
             try:
                 parameters = [parameter if parameter[0] != "*" else parameter[1:] for parameter in userInputSplit[1:]]
             except:
-                print(f"[{filename}:{inspect.currentframe().f_lineno}] Invalid parameters: ", userInput)
+                print(f"[{filename}:{inspect.currentframe().f_lineno}] Invalid parameters")
                 COMMAND_PROCESSED = True
                 continue
             if command in commands:
-                commands[command](*parameters)
+                try:
+                    commands[command](*parameters)
+                except TypeError as e:
+                    print(f"[{filename}:{inspect.currentframe().f_lineno}] {e}")
+                    print(f"""[{filename}:{inspect.currentframe().f_lineno}] Possible causes:
+1. You did not authorize your account set, run `setAccount <ctidTraderAccountId>`
+2. Missong or wrong parameter given to the command
+3. The command is outdated, check their documentation""")
+                    COMMAND_PROCESSED = True
+                    continue
             else:
-                print(f"[{filename}:{inspect.currentframe().f_lineno}] Invalid Command: ", userInput)
+                print(f"[{filename}:{inspect.currentframe().f_lineno}] Invalid Command, try `help`")
                 COMMAND_PROCESSED = True
                 continue
+            
+
 
     # Start a new thread that handle user input command
-    thread_user_input = threading.Thread(target=executeUserCommand)
+    thread_user_input = threading.Thread(target=GetUserCommand)
     thread_user_input.start()
 
     # Start a new thread that handle command input-ed by user
-    thread_process_command = threading.Thread(target=processCommand)
+    thread_process_command = threading.Thread(target=processUserCommand)
     thread_process_command.start()
 
     # Setting optional client callbacks
