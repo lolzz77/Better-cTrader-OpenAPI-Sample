@@ -44,10 +44,7 @@ ACCOUNT_TYPE="<put 'demo' or 'live', my coding only detects these 2 words, go in
 23. Type `setAccount <ctidTraderAccountId>` to authenticate that account
 24. Then type `help` to proceed with any commands you would like to try
 25. Press `CTRL + D` to disconnect & terminate the program
-26. Known issue:
-- There is one major unhandled error problem. If command typed result in python execution error 
-(eg: type `ProtoOASubscribeSpotsReq` without giving required parameter, or account is not authorized 
-before entering the rest of command), will result in script hang.
-I don't know what's the better way of handling it yet. This is from original sample code.
-- Calling `ProtoOASubscribeSpotsReq` will result in script error, it happens after the
-parameter `timeInSeconds` timeout. I haven't work on how to better handle it yet.
+26. Press `CTRL + D` if you encounter the script just suddenly hang.
+27. Many reason will cause it to hang, like
+- Forgot to authenticate account before trigger some function that requires your account to be authenticated first.
+- Type some command and forgot to pass in some required argument.
