@@ -44,7 +44,7 @@ ACCOUNT_TYPE="<put 'demo' or 'live', my coding only detects these 2 words, go in
 23. Type `setAccount <ctidTraderAccountId>` to authenticate that account
 24. Then type `help` to proceed with any commands you would like to try
 25. Press `CTRL + D` to disconnect & terminate the program
-26. Press `CTRL + D` if your script encountered some error and the script seems hang/freezed.
+26. Press `CTRL + D` or `CTRL + C` or kill the terminal if your script encountered some error and the script seems hang/freezed.
 27. Many reason will cause it to hang/freezed, like
 - Forgot to authenticate account before trigger some function that requires your account to be authenticated first.
 - Type some command and forgot to pass in some required argument.
